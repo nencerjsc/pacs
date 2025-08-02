@@ -1,0 +1,22 @@
+/NencerLLC/.vs
+/NencerLLC/NencerApi/obj
+/NencerLLC/NencerApi/bin
+/.github
+/.vs
+
+# Ignore thư mục bin và obj
+bin/
+obj/
+
+# Bỏ qua thư mục Export_PDF
+/NencerLLC/NencerApi/wwwroot/LIS/Export_PDF
+
+# Bỏ qua các tệp PublishProfiles
+*.pubxml
+*.pubxml.user
+
+# Bỏ qua tệp .csproj.user
+*.csproj.user
+
+# Bỏ qua publish profiles
+Properties/PublishProfiles/*.pubxml

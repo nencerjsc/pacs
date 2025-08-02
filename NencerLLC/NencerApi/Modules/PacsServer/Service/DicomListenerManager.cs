@@ -1,0 +1,60 @@
+﻿using FellowOakDicom.Network;
+using Microsoft.Extensions.Logging;
+using System;
+
+namespace NencerApi.Modules.PacsServer.Service
+{
+    public class DicomListenerManager
+    {
+        private readonly ILogger<DicomListenerManager> _logger;
+        private IDicomServer _dicomServer;
+        private readonly int _port = 11112;
+        private readonly string _aeTitle = "NENCER";
+
+        public bool IsRunning => _dicomServer != null;
+
+        public DicomListenerManager(ILogger<DicomListenerManager> logger)
+        {
+            _logger = logger;
+        }
+
+        public void Start()
+        {
+            if (IsRunning)
+            {
+                _logger.LogWarning("⚠️ Listener đã chạy.");
+                return;
+            }
+
+            try
+            {
+                _dicomServer = DicomServerFactory.Create<DicomCStoreSCP>(_port);
+                _logger.LogInformation("✅ Listener đã chạy trên cổng {Port} - AE: {AeTitle}", _port, _aeTitle);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Lỗi khi khởi động Listener.");
+            }
+        }
+
+        public void Stop()
+        {
+            if (!IsRunning)
+            {
+                _logger.LogWarning("⚠️ Listener chưa chạy.");
+                return;
+            }
+
+            try
+            {
+                _dicomServer?.Dispose();
+                _dicomServer = null;
+                _logger.LogInformation("🛑 Listener đã dừng.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Lỗi khi dừng Listener.");
+            }
+        }
+    }
+}
