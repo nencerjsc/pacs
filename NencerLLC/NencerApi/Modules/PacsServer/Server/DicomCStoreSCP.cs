@@ -14,29 +14,36 @@ using Hl7.Fhir.Rest;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using NencerApi.Modules.PacsServer.Model;
+using NencerCore;
+using NencerApi.Modules.PacsServer.Service;
 
-namespace NencerDicomServerLib
+namespace NencerApi.Modules.PacsServer.Server
 {
     public class DicomCStoreSCP : DicomService, IDicomServiceProvider, IDicomCStoreProvider, IDicomCEchoProvider, IDicomCFindProvider, IDicomCMoveProvider, IDicomCGetProvider
     {
-        private readonly string _storageFolder = "dicom_storage";
-        public DicomCStoreSCP(INetworkStream stream, Encoding fallbackEncoding, DicomServiceDependencies dependencies)
+        private readonly string _storageFolder;
+        private readonly IConfiguration _config;
+
+        private readonly AppDbContext _context;
+        public DicomCStoreSCP(INetworkStream stream, Encoding fallbackEncoding, DicomServiceDependencies dependencies, IConfiguration config)
         : base(stream, fallbackEncoding, new Serilog.Extensions.Logging.SerilogLoggerProvider().CreateLogger("DicomCStoreSCP"), dependencies)
         {
             Log.Information("🚀 Khởi tạo kết nối mới.");
+            _config = config;
+            _storageFolder = _config["DicomServer:StoragePath"] ?? "C:\\Pacs\\Storage";
             Directory.CreateDirectory(_storageFolder);
-            //_workListService = userState as DicomWorkListService;
         }
 
         public DicomCStoreSCP(
             INetworkStream stream,
             Encoding fallbackEncoding,
-            Microsoft.Extensions.Logging.ILogger logger, IConfiguration config,
+            Microsoft.Extensions.Logging.ILogger logger, IConfiguration config, AppDbContext context,
             DicomServiceDependencies dependencies)
             : base(stream, fallbackEncoding, logger, dependencies)
         {
             Log.Information("🚀 DicomCStoreSCP đã được khởi tạo");
-            _storageFolder = config["Storage:BasePath"] ?? "dicom_storage";
+            _config = config;
+            _context = context;
         }
 
         private static readonly DicomTransferSyntax[] _acceptedTransferSyntaxes = new DicomTransferSyntax[]
@@ -69,7 +76,7 @@ namespace NencerDicomServerLib
         {
             // Kiểm tra AETitle hoặc các tiêu chí xác thực
             var callingAE = association.CallingAE;
-            var allowedAEs = AppConfig.DicomServer.AllowedAEs;
+            var allowedAEs = _config["DicomServer:AllowedAEs"] ?? null;
 
             if (!allowedAEs.Contains(callingAE))
             {
@@ -125,20 +132,44 @@ namespace NencerDicomServerLib
         public async Task<DicomCStoreResponse> OnCStoreRequestAsync(DicomCStoreRequest request)
         {
             Log.Information("📤 Nhận yêu cầu gửi tệp DICOM từ AE: {AETitle}", Association.CallingAE);
+
             try
             {
                 var dicomFile = request.File;
                 var dataset = dicomFile.Dataset;
 
-                // Đưa file vào hàng đợi để xử lý sau
-                DicomCStoreProcessorService.Instance.Enqueue(dicomFile);
+                // Lấy Storage đang active
+                var storagePathService = new StoragePathService(_context); // inject context hoặc lấy qua DI
+                var storagePathModel = await storagePathService.GetActiveStorageAsync();
+
+                if (storagePathModel == null)
+                {
+                    Log.Error("❌ Không có Storage nào đang active để lưu file.");
+                    return new DicomCStoreResponse(request, DicomStatus.ProcessingFailure);
+                }
+
+                string patientId = dataset.GetSingleValueOrDefault(DicomTag.PatientID, "Unknown");
+                string dicomDate = dataset.GetSingleValueOrDefault(DicomTag.StudyDate, DateTime.Now.ToString("yyyyMMdd"));
+
+                if (dicomDate.Length < 8)
+                    dicomDate = DateTime.Now.ToString("yyyyMMdd");
+
+                string fileName = dataset.GetSingleValue<string>(DicomTag.SOPInstanceUID) + ".dcm";
+                string relativePath = Path.Combine(patientId, dicomDate, fileName);
+                string storageFullPath = Path.Combine(storagePathModel.Path, relativePath);
+
+                // Tạo thư mục nếu chưa tồn tại
+                Directory.CreateDirectory(Path.GetDirectoryName(storageFullPath)!);
+
+                // Lưu file DICOM
+                await dicomFile.SaveAsync(storageFullPath);
+                Log.Information("✅ Đã lưu file DICOM trực tiếp: {Path}", storageFullPath);
 
                 return new DicomCStoreResponse(request, DicomStatus.Success);
-
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "❌ Lỗi khi lưu ảnh DICOM.");
+                Log.Error(ex, "❌ Lỗi khi lưu ảnh DICOM trực tiếp.");
                 return new DicomCStoreResponse(request, DicomStatus.ProcessingFailure);
             }
         }
@@ -164,7 +195,7 @@ namespace NencerDicomServerLib
                 yield break;
             }
 
-            var storagePath = config["Storage:BasePath"] ?? "dicom_storage";
+            var storagePath = _config["DicomServer:StoragePath"] ?? "C:\\Pacs\\Storage";
             if (!Directory.Exists(storagePath))
             {
                 Log.Error("🚫 DICOM directory not found");
@@ -195,11 +226,9 @@ namespace NencerDicomServerLib
 
             DicomDataset dataset = request.Dataset;
             string studyInstanceUID = dataset.GetSingleValue<string>(DicomTag.StudyInstanceUID);
-            //string seriesInstanceUID = dataset.GetSingleValue<string>(DicomTag.SeriesInstanceUID);
-            //string sopInstanceUID = dataset.GetSingleValue<string>(DicomTag.SOPInstanceUID);
 
             // Lấy đường dẫn thư mục DICOM
-            var dicomDirectory = AppConfig.DicomServer.StoragePath;
+            var dicomDirectory = _config["DicomServer:StoragePath"] ?? "C:\\Pacs\\Storage";
 
             if (!Directory.Exists(dicomDirectory))
             {
@@ -245,7 +274,7 @@ namespace NencerDicomServerLib
             string studyInstanceUID = dataset.GetSingleValue<string>(DicomTag.StudyInstanceUID);
 
             // Lấy đường dẫn thư mục DICOM
-            var dicomDirectory = AppConfig.DicomServer.StoragePath;
+            var dicomDirectory = _config["DicomServer:StoragePath"] ?? "C:\\Pacs\\Storage";
 
             if (!Directory.Exists(dicomDirectory))
             {
@@ -281,6 +310,8 @@ namespace NencerDicomServerLib
             }
             yield return new DicomCGetResponse(request, DicomStatus.Success);
         }
+
+
         public async IAsyncEnumerable<DicomCFindResponse> HandleWorklistAsync(DicomCFindRequest request)
         {
             Log.Information("📋 Nhận C-FIND Worklist từ AE: {AE}", Association?.CallingAE ?? string.Empty);
@@ -296,8 +327,6 @@ namespace NencerDicomServerLib
             try
             {
                 string? AEC = Association?.CallingAE;
-
-                using var _context = new DicomDbContext();
 
                 var query = _context.DicomWorkLists.AsQueryable();
                 query = query.Where(w => w.ScheduledAET == AEC);

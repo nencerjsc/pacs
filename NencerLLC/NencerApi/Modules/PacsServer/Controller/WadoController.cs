@@ -1,6 +1,5 @@
 ﻿using FellowOakDicom.Imaging.Codec;
 using FellowOakDicom.Imaging;
-using FellowOakDicom.Network;
 using FellowOakDicom;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
@@ -8,6 +7,7 @@ using NencerCore;
 using NencerApi.Modules.PacsServer.Model;
 using Microsoft.EntityFrameworkCore;
 using NencerApi.Modules.PacsServer.Helpers;
+using NencerApi.Modules.PacsServer.Service;
 
 namespace NencerApi.Modules.PacsServer.Controller
 {
@@ -15,7 +15,7 @@ namespace NencerApi.Modules.PacsServer.Controller
     [Route("studies")]
     public class WadoController : ControllerBase
     {
-        private readonly DicomService _service;
+        private readonly DicomLocalService _service;
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
 

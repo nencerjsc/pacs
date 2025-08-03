@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 
-namespace NencerApi.Modules.PacsServer.Service
+namespace NencerApi.Modules.PacsServer.Server
 {
     public class DicomListenerManager
     {

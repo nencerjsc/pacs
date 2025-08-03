@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NencerApi.Modules.PacsServer.Service
+namespace NencerApi.Modules.PacsServer.Server
 {
     public class DicomListenerHostedService : IHostedService
     {

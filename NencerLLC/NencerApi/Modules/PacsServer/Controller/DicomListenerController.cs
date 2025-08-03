@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NencerApi.Modules.PacsServer.Service;
+using NencerApi.Modules.PacsServer.Server;
 
 namespace NencerApi.Modules.PacsServer.Controller
 {

@@ -38,6 +38,9 @@ namespace NencerCore
         public DbSet<DicomInstanceModel> DicomInstances { get; set; } = default!;
         public DbSet<DicomSerieModel> DicomSeries { get; set; } = default!;
         public DbSet<DicomTagItemModel> DicomTags { get; set; } = default!;
+        public DbSet<StoragePathModel> StoragePaths { get; set; }
+        public DbSet<DicomWorkListModel> DicomWorkLists { get; set; }
+        public DbSet<PacsDicomResultModel> PacsDicomResults { get; set; }
     }
 
 }

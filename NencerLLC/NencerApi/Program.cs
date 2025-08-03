@@ -7,7 +7,7 @@ using Microsoft.OpenApi.Models;
 using NencerApi.ActionFilter;
 using NencerApi.Extentions;
 using NencerApi.Helpers;
-using NencerApi.Modules.PacsServer.Service;
+using NencerApi.Modules.PacsServer.Server;
 using NencerApi.Modules.SystemNc.Service;
 using NencerApi.Modules.User.Model;
 using NencerApi.Modules.User.Service;

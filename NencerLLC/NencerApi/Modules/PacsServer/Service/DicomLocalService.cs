@@ -7,7 +7,7 @@ using NencerApi.Modules.PacsServer.Model;
 
 namespace NencerApi.Modules.PacsServer.Service
 {
-    public class DicomService
+    public class DicomLocalService
     {
         private readonly string _dicomStorePath = @"C:\Pacs\Storage";
 
