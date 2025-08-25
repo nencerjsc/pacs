@@ -8,9 +8,9 @@ namespace NencerApi.Modules.PacsServer.Service
     {
         private readonly AppDbContext _context;
 
-        public StoragePathService(AppDbContext context)
+        public StoragePathService()
         {
-            _context = context;
+            _context = new AppDbContext();
         }
 
         public async Task ActivateStorageAsync(int storageId)

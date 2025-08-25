@@ -1,7 +1,13 @@
-﻿namespace NencerApi.Modules.PacsServer.Model
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace NencerApi.Modules.PacsServer.Model
 {
+    [Table("DicomTags")]
     public class DicomTagItemModel
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public string SOPInstanceUID { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;        // 00100010

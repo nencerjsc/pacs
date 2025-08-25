@@ -1,4 +1,5 @@
 ﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using FellowOakDicom;
 using log4net;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +14,34 @@ using NencerApi.Modules.User.Model;
 using NencerApi.Modules.User.Service;
 using NencerCore;
 using NuGet.Protocol;
+using Serilog.Events;
+using Serilog;
 using System;
 using System.Net.WebSockets;
 using System.Text;
+using NencerApi.Modules.PacsServer.Service;
+using NencerApi.Modules.PacsServer.Config;
+
+new DicomSetupBuilder()
+    .RegisterServices(s => s.AddFellowOakDicom().AddLogging(config => config.AddSerilog()))
+    .Build();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Cấu hình Serilog
+Log.Logger = new LoggerConfiguration()
+     .MinimumLevel.Debug()
+     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+     .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "logs/log-.txt", // Đường dẫn thư mục và tên file (logs/log-[ngày].txt)
+        rollingInterval: RollingInterval.Day, // Tạo file mới mỗi ngày
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}",
+         fileSizeLimitBytes: 50_000_000,
+         rollOnFileSizeLimit: true
+    )
+    .CreateLogger();
 
 // Thêm cấu hình JSON
 builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
@@ -39,8 +63,7 @@ builder.Services.AddCors(options =>
 
 
 // Cấu hình DbContext sử dụng SQL Server
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnection")));
+builder.Services.AddDbContext<AppDbContext>();
 
 // Cấu hình các dịch vụ khác
 builder.Services.AddControllers(opt =>
@@ -76,6 +99,7 @@ builder.Services.AddScoped<SettingService>();
 builder.Services.AddScoped<SendmessService>();
 builder.Services.AddScoped<CheckPermissionService>();
 builder.Services.AddScoped<Statistics>();
+builder.Services.AddScoped<DicomWorkListService>();
 
 
 // Cấu hình xác thực JWT

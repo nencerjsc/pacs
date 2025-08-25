@@ -18,6 +18,7 @@ namespace NencerApi.Modules.PacsServer.Controller
         private readonly DicomLocalService _service;
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly StoragePathService _storagePathService = new StoragePathService();
 
         public WadoController(AppDbContext context , IConfiguration config)
         {
@@ -45,7 +46,9 @@ namespace NencerApi.Modules.PacsServer.Controller
                 .Select(DicomSeriesMapperHelper.ToDicomJson)
                 .ToList();
 
-            return Ok(result);
+            var json = System.Text.Json.JsonSerializer.Serialize(result);
+            return Content(json, "application/dicom+json");
+            //return Ok(result);
         }
 
         [HttpGet("{studyUID}/series/{seriesUID}/metadata")]
@@ -92,8 +95,9 @@ namespace NencerApi.Modules.PacsServer.Controller
 
                     allMetadata.Add(metadata);
                 }
-
-                return Ok(allMetadata);
+                var json = System.Text.Json.JsonSerializer.Serialize(allMetadata);
+                return Content(json, "application/dicom+json");
+                //return Ok(allMetadata);
             }
             catch (Exception ex)
             {
@@ -149,8 +153,8 @@ namespace NencerApi.Modules.PacsServer.Controller
 
             try
             {
-                var storageBasePath = _config["Storage:BasePath"];
-                var storageFullPath = Path.Combine(storageBasePath, instance.FilePath);
+                var storagePath = await _storagePathService.GetActiveStorageAsync();
+                var storageFullPath = Path.Combine(storagePath?.Path ?? string.Empty, instance.FilePath);
                 if (!System.IO.File.Exists(storageFullPath))
                     return NotFound("DICOM file not found.");
 

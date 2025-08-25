@@ -4,14 +4,12 @@ using NencerApi.Modules.User.Model;
 using System.Data;
 using NencerApi.Helpers;
 using NencerApi.Modules.PacsServer.Model;
+using NencerApi.Modules.PacsServer.Config;
+using Serilog;
 namespace NencerCore
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options)
-              : base(options)
-        {
-        }
         public DbSet<Setting> Settings { get; set; }
         public DbSet<WebData> WebDatas { get; set; }
         public DbSet<UserModel> User { get; set; } = default!;
@@ -41,6 +39,19 @@ namespace NencerCore
         public DbSet<StoragePathModel> StoragePaths { get; set; }
         public DbSet<DicomWorkListModel> DicomWorkLists { get; set; }
         public DbSet<PacsDicomResultModel> PacsDicomResults { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            try
+            {
+                optionsBuilder.UseSqlServer(AppConfig.Database.SqlServerConnection);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "⚠️ Lỗi khi cấu hình DbContext. Sử dụng cấu hình mặc định.");
+            }
+
+        }
     }
 
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DevExpress.CodeParser.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using NencerApi.Modules.PacsServer.Model;
 using NencerCore;
 
@@ -8,9 +9,9 @@ namespace NencerApi.Modules.PacsServer.Service
     {
         private readonly AppDbContext _context;
 
-        public DicomDataService(AppDbContext context, IConfiguration config)
+        public DicomDataService()
         {
-            _context = context;
+            _context = new AppDbContext();
         }
 
         public async Task<List<DicomStudyModel>> GetAllStudiesAsync()
@@ -45,25 +46,35 @@ namespace NencerApi.Modules.PacsServer.Service
             }
             catch (Exception ex)
             {
-                //Log.Error(ex, "Lỗi khi thêm DicomStudy. StudyInstanceUID: {StudyInstanceUID}", model.StudyInstanceUID);
+                Serilog.Log.Error(ex, "Lỗi khi thêm DicomStudy. StudyInstanceUID: {StudyInstanceUID}", model.StudyInstanceUID);
                 return false;
             }
         }
 
         public async Task<bool> UpdateStudyAsync(DicomStudyModel updatedModel)
         {
-            var existing = await _context.DicomStudies
-                .FirstOrDefaultAsync(s => s.StudyInstanceUID == updatedModel.StudyInstanceUID);
+            
+            try
+            {
+                var existing = await _context.DicomStudies
+                 .FirstOrDefaultAsync(s => s.StudyInstanceUID == updatedModel.StudyInstanceUID);
 
-            if (existing == null)
+                if (existing == null)
+                    return false;
+
+                // Cập nhật các trường cần thiết (ở đây là số lượng series và instance)
+                existing.NumberOfStudyRelatedSeries = updatedModel.NumberOfStudyRelatedSeries;
+                existing.NumberOfStudyRelatedInstances = updatedModel.NumberOfStudyRelatedInstances;
+
+                _context.DicomStudies.Update(existing);
+
+                return await _context.SaveChangesAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Lỗi khi UpdateStudyAsync", updatedModel.StudyInstanceUID);
                 return false;
-
-            // Cập nhật các trường cần thiết (ở đây là số lượng series và instance)
-            existing.NumberOfStudyRelatedSeries = updatedModel.NumberOfStudyRelatedSeries;
-            existing.NumberOfStudyRelatedInstances = updatedModel.NumberOfStudyRelatedInstances;
-
-            _context.DicomStudies.Update(existing);
-            return await _context.SaveChangesAsync() > 0;
+            }
         }
 
         public async Task<DicomStudyModel?> GetStudyByInstanceUIDAsync(string studyInstanceUID)
@@ -90,8 +101,16 @@ namespace NencerApi.Modules.PacsServer.Service
 
         public async Task<bool> UpdateSeriesAsync(DicomSerieModel model)
         {
-            _context.DicomSeries.Update(model);
-            return await _context.SaveChangesAsync() > 0;
+            try
+            {
+                _context.DicomSeries.Update(model);
+                return await _context.SaveChangesAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Lỗi khi update UpdateSeriesAsync", model.StudyInstanceUID);
+                return false;
+            }
         }
 
         public async Task<bool> CreateSerieAsync(DicomSerieModel model)
@@ -114,7 +133,7 @@ namespace NencerApi.Modules.PacsServer.Service
             }
             catch (Exception ex)
             {
-                //Log.Error(ex, "Lỗi khi thêm DicomStudy. StudyInstanceUID: {StudyInstanceUID}", model.StudyInstanceUID);
+                Serilog.Log.Error(ex, "Lỗi khi thêm DicomStudy. StudyInstanceUID: {StudyInstanceUID}", model.StudyInstanceUID);
                 return false;
             }
         }
@@ -146,7 +165,7 @@ namespace NencerApi.Modules.PacsServer.Service
             }
             catch (Exception ex)
             {
-                //Log.Error(ex, "Lỗi khi thêm DicomStudy. StudyInstanceUID: {StudyInstanceUID}", model.StudyInstanceUID);
+                Serilog.Log.Error(ex, "Lỗi khi thêm DicomStudy. StudyInstanceUID: {StudyInstanceUID}", model.StudyInstanceUID);
                 return false;
             }
         }

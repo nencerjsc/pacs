@@ -1,7 +1,13 @@
-﻿namespace NencerApi.Modules.PacsServer.Model
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace NencerApi.Modules.PacsServer.Model
 {
+    [Table("DicomWorkLists")]
     public class DicomWorkListModel
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public string OrderRequestId { get; set; } = string.Empty;
         public string AccessionNumber { get; set; } = string.Empty;

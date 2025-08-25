@@ -43,7 +43,8 @@ namespace NencerApi.Modules.PacsServer.Controller
             [FromQuery(Name = "StudyInstanceUID")] string? StudyInstanceUID = "")
         {
 
-            var query = _context.DicomStudies.AsQueryable();
+            var query = _context.DicomStudies
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(patientId))
             {
@@ -59,7 +60,7 @@ namespace NencerApi.Modules.PacsServer.Controller
                 query = query.Where(s => s.StudyInstanceUID == StudyInstanceUID);
 
             // Lấy tổng số bản ghi (nếu cần phân trang nâng cao)
-            var total = await query.CountAsync();
+            //var total = await query.CountAsync();
 
             // Áp dụng phân trang
             var studies = await query
@@ -69,8 +70,10 @@ namespace NencerApi.Modules.PacsServer.Controller
                 .ToListAsync();
 
             var result = studies.Select(DicomStudyMapperHelper.ToDicomJson).ToList();
-            return Ok(result);
-           
+            //return Ok(result);
+            var json = System.Text.Json.JsonSerializer.Serialize(result);
+            return Content(json, "application/dicom+json");
+
         }
 
         [HttpPost]

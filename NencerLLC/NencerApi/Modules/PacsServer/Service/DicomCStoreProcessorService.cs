@@ -11,12 +11,12 @@ namespace NencerApi.Modules.PacsServer.Service
     {
         private readonly Channel<DicomFile> _channel;
         private readonly StoragePathService _storagePathService;
-        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public DicomCStoreProcessorService(StoragePathService storagePathService, IServiceScopeFactory serviceScopeFactory)
+        public static readonly DicomCStoreProcessorService Instance = new DicomCStoreProcessorService();
+
+        public DicomCStoreProcessorService()
         {
-            _storagePathService = storagePathService;
-            _serviceScopeFactory = serviceScopeFactory;
+            _storagePathService = new StoragePathService();
             _channel = Channel.CreateUnbounded<DicomFile>();
             _ = Task.Run(() => StartConsumer());
         }
@@ -84,8 +84,7 @@ namespace NencerApi.Modules.PacsServer.Service
 
         private async Task SaveDicomMetadataAsync(DicomDataset dataset, int storageId, string relativePath)
         {
-            using var scope = _serviceScopeFactory.CreateScope();
-            var dicomDataService = scope.ServiceProvider.GetRequiredService<DicomDataService>();
+            DicomDataService dicomDataService = new DicomDataService();
             var converter = new DicomDataSetConvertHelper(dataset);
 
             string studyUID = dataset.GetSingleValueOrDefault(DicomTag.StudyInstanceUID, string.Empty);

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NencerApi.Modules.PacsServer.Model
 {
+    [Table("PacsDicomResults")]
     public class PacsDicomResultModel
     {
         [Key]

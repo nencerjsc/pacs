@@ -1,7 +1,13 @@
-﻿namespace NencerApi.Modules.PacsServer.Model
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace NencerApi.Modules.PacsServer.Model
 {
+    [Table("StoragePaths")]
     public class StoragePathModel
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public string Path { get; set; } = null!;
         public int Priority { get; set; }

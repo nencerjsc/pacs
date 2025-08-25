@@ -1,5 +1,6 @@
 ﻿using FellowOakDicom.Network;
 using Microsoft.Extensions.Logging;
+using NencerApi.Modules.PacsServer.Config;
 using System;
 
 namespace NencerApi.Modules.PacsServer.Server
@@ -8,8 +9,8 @@ namespace NencerApi.Modules.PacsServer.Server
     {
         private readonly ILogger<DicomListenerManager> _logger;
         private IDicomServer _dicomServer;
-        private readonly int _port = 11112;
-        private readonly string _aeTitle = "NENCER";
+        private int _port = 11112;
+        private string _aeTitle = "NENCER";
 
         public bool IsRunning => _dicomServer != null;
 
@@ -25,7 +26,8 @@ namespace NencerApi.Modules.PacsServer.Server
                 _logger.LogWarning("⚠️ Listener đã chạy.");
                 return;
             }
-
+            _port = AppConfig.DicomServer.Port;
+            _aeTitle = AppConfig.DicomServer.ServerAETitle;
             try
             {
                 _dicomServer = DicomServerFactory.Create<DicomCStoreSCP>(_port);

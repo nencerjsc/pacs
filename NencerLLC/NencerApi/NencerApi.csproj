@@ -41,7 +41,9 @@
     <PackageReference Include="OfficeOpenXml.Extension.AspNetCore" Version="1.0.0" />
     <PackageReference Include="SendGrid" Version="9.29.3" />
     <PackageReference Include="Serilog" Version="4.3.1-dev-02373" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.3-dev-02320" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
 	<PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
